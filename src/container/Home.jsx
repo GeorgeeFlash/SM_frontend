@@ -14,10 +14,10 @@ const Home = () => {
 
   const [toggleSidebar, setToggleSidebar] = useState(false);
   const [user, setUser] = useState(null);
-  const userInfo = fetchUser();
   const scrollRef = useRef();
 
   useEffect(() => {
+    const userInfo = fetchUser();
     const query = userQuery(userInfo?.sub);
 
     client.fetch(query)
@@ -32,7 +32,6 @@ const Home = () => {
   }, [])
   
   
-
   return (
     <div className='flex bg-gray-50 md:flex-row flex-col h-screen transition-height duration-75 ease-out'>
       <div className="hidden md:flex h-screen flex-initial">
@@ -45,7 +44,7 @@ const Home = () => {
             <img src={logo} alt="logo" className="w-28" />
           </Link>
           <Link to={`user-profile/${user?._id}`}>
-            <img src={user?.image} alt="user-profile" className="w-28" />
+            <img src={user?.image} alt="user-profile" className="w-10 rounded-full" />
           </Link>
         </div>
 

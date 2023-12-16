@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { MdDownloadForOffline } from 'react-icons/md'
 import { Link, useParams } from 'react-router-dom'
 import { v4 as uuidv4 } from 'uuid'
@@ -12,11 +12,11 @@ const PinDetail = ({ user }) => {
 
   const [pins, setPins] = useState(null)
   const [pinDetail, setPinDetail] = useState(null)
-  const [comment, setComment] = useState('')
+  const [comment, setComment] = useState("")
   const [addingComment, setAddingComment] = useState(false)
   const { pinId } = useParams();
 
-  const fetchPinDetails = () => {
+  const fetchPinDetails = useCallback(() => {
     let query = pinDetailQuery(pinId)
 
     if(query) {
@@ -32,20 +32,23 @@ const PinDetail = ({ user }) => {
           }
         })
     }
-  }
+  }, [pinId])
+
 
   const addComment = () => {
     if(comment) {
+      console.log('Comment: ', comment)
       setAddingComment(true)
 
-      client.patch(pinId)
-        .setIfMissing({ comments: ''})
+      client
+        .patch(pinId)
+        .setIfMissing({ comments: []})
         .insert('after', 'comments[-1]', [{
           comment,
           _key: uuidv4(),
           postedBy: {
             _type: 'postedBy',
-            _ref: user._id
+            _ref: user?._id
           }
         }])
         .commit()
@@ -59,7 +62,7 @@ const PinDetail = ({ user }) => {
   
   useEffect(() => {
     fetchPinDetails();
-  }, [pinId])
+  }, [pinId, fetchPinDetails])
 
   if(!pinDetail) return <Spinner message="Loading pin..." />
 
@@ -80,12 +83,17 @@ const PinDetail = ({ user }) => {
                 href={`${pinDetail.image?.asset?.url}?dl=`}
                 download
                 onClick={(e) => e.stopPropagation()}
-                className='bg-white w-9 h-9 rounded-full flex items-center justify-center text-dark text-xl opacity-75 hover:opacity-100 hover:shadow-md outline-none'
+                className='bg-white w-10 h-10 rounded-full flex items-center justify-center opacity-75 hover:opacity-100 hover:shadow-md outline-none'
               >
-                <MdDownloadForOffline />
+                <MdDownloadForOffline className='text-2xl text-red-500'/>
               </a>
             </div>
-            <a href={pinDetail.destination} target='_black' rel='noreferre'>
+            <a 
+              href={pinDetail.destination} 
+              target='_black' 
+              rel='noreferre'
+              className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 rounded-lg text-sm p-2 font-bold"
+            >
               {pinDetail.destination}
             </a>
           </div>
@@ -110,45 +118,40 @@ const PinDetail = ({ user }) => {
             {pinDetail?.comments?.map((comment, i) => (
               <div className="flex gap-2 mt-5 items-center bg-white rounded-lg" key={i}>
                 <img 
-                  src={comment.postedBy.image}
+                  src={comment.postedBy?.image}
                   alt="user-profile"
                   className='w-10 h-10 rounded-full cursor-pointer'
                 />
                 <div className="flex flex-col">
                   <p className="font-bold">
-                    {comment.postedBy.userName}
-                    <p>{comment.comment}</p>
+                    {comment.postedBy?.userName}
+                  </p>
+                  <p>
+                    {comment.comment}
                   </p>
                 </div>
               </div>
             ))}
           </div>
           <div className="flex flex-wrap mt-6 gap-3">
-          <Link to={`user-profile/${pinDetail.postedBy?._id}`}>
-              <img 
-                  src={pinDetail.postedBy?.image} 
-                  alt="user-profile" 
-                  className='w-8 h-8 rounded-full cursor-pointer'
-              />
-          </Link>
-          <input
-            className='flex-1 border-gray-100 outline-none border-2 p-2 rounded-2xl focus:border-gray-300'
-            type="text"
-            placeholder='Add a comment'
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-          />
-          <button
-            type="button"
-            className='bg-red-500 text-white rounded-full px-6 py-2 font-semibold text-base outline-none'
-            onClick={addComment}
-          >
-            {addingComment ? 'Posting comment...' : 'Post'}
-          </button>
+            <input
+              className='flex-1 border-gray-100 outline-none border-2 p-2 rounded-2xl focus:border-gray-300'
+              type="text"
+              placeholder='Add a comment'
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+            />
+            <button
+              type="button"
+              className='bg-red-500 text-white rounded-full px-6 py-2 font-semibold text-base outline-none'
+              onClick={addComment}
+            >
+              {addingComment ? 'Posting comment...' : 'Post'}
+            </button>
           </div>
         </div>
       </div>
-      {pins.length > 0 ? (
+      {pins?.length > 0 ? (
         <>
           <h2 className="text-center font-bold text-2xl mt-8 mb-4">
             More like this
